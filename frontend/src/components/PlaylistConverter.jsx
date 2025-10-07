@@ -65,11 +65,16 @@ function PlaylistConverter() {
               placeholder="https://open.spotify.com/playlist/..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
+            {platform === 'spotify' && (
+              <p className="mt-2 text-sm text-gray-600">
+                ℹ️ Note: Only user-created public playlists are supported. Spotify curated playlists (Discover Weekly, Top 50, etc.) require user authentication.
+              </p>
+            )}
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg whitespace-pre-line">
               {error}
             </div>
           )}
