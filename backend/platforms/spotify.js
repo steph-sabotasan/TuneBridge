@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Spotify playlist ID is always 22 characters long
 const SPOTIFY_PLAYLIST_ID_LENGTH = 22;
+const PLAYLIST_ID_REGEX = /^[a-zA-Z0-9]{22}$/;
 
 // Extract playlist ID from Spotify URL
 function extractPlaylistId(url) {
@@ -14,8 +15,7 @@ function extractPlaylistId(url) {
   const playlistId = match[1];
   
   // Additional validation: ensure playlist ID is alphanumeric and correct length
-  const validationRegex = new RegExp(`^[a-zA-Z0-9]{${SPOTIFY_PLAYLIST_ID_LENGTH}}$`);
-  if (!validationRegex.test(playlistId)) {
+  if (!PLAYLIST_ID_REGEX.test(playlistId)) {
     throw new Error('Invalid Spotify playlist ID format');
   }
   
@@ -48,12 +48,12 @@ async function getAccessToken() {
 // Fetch playlist tracks from Spotify
 export async function getPlaylistTracks(url) {
   try {
+    // Extract and validate playlist ID (ensures only alphanumeric characters)
     const playlistId = extractPlaylistId(url);
     const accessToken = await getAccessToken();
 
-    // Construct URL with validated and encoded playlist ID
-    // Even though validation ensures alphanumeric only, encoding is a defense-in-depth measure
-    const apiUrl = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}`;
+    // Construct API URL - playlistId is validated to be alphanumeric only
+    const apiUrl = `https://api.spotify.com/v1/playlists/${playlistId}`;
 
     // Fetch playlist data
     const response = await axios.get(apiUrl, {
