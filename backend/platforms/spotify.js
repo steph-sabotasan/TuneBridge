@@ -7,7 +7,15 @@ function extractPlaylistId(url) {
   if (!match) {
     throw new Error('Invalid Spotify playlist URL');
   }
-  return match[1];
+  
+  const playlistId = match[1];
+  
+  // Additional validation: ensure playlist ID is alphanumeric and reasonable length
+  if (!/^[a-zA-Z0-9]{22}$/.test(playlistId)) {
+    throw new Error('Invalid Spotify playlist ID format');
+  }
+  
+  return playlistId;
 }
 
 // Get Spotify access token
