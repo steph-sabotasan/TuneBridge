@@ -47,9 +47,11 @@ async function getAccessToken() {
 
 // Fetch playlist tracks from Spotify
 export async function getPlaylistTracks(url) {
+  let playlistId;
+  
   try {
     // Extract and validate playlist ID (ensures only alphanumeric characters)
-    const playlistId = extractPlaylistId(url);
+    playlistId = extractPlaylistId(url);
     const accessToken = await getAccessToken();
 
     // Construct API URL - playlistId is validated to be alphanumeric only
@@ -76,7 +78,34 @@ export async function getPlaylistTracks(url) {
     return tracks;
   } catch (error) {
     if (error.response) {
-      throw new Error(`Spotify API error: ${error.response.data.error?.message || error.response.statusText}`);
+      const status = error.response.status;
+      const errorMessage = error.response.data.error?.message || error.response.statusText;
+      
+      // Provide helpful error messages based on status code
+      if (status === 404) {
+        // Check if it's likely a Spotify curated playlist
+        if (playlistId && playlistId.startsWith('37i9dQ')) {
+          throw new Error(
+            'This Spotify playlist cannot be accessed with your current authentication. ' +
+            'Spotify editorial/curated playlists (like Discover Weekly, Top 50, etc.) require user authentication. ' +
+            'Please try with a user-created public playlist instead.'
+          );
+        }
+        throw new Error(
+          'Playlist not found. Please check that:\n' +
+          '1. The playlist URL is correct\n' +
+          '2. The playlist is public (not private)\n' +
+          '3. The playlist exists and hasn\'t been deleted'
+        );
+      } else if (status === 401) {
+        throw new Error('Spotify authentication failed. Please check your API credentials.');
+      } else if (status === 403) {
+        throw new Error('Access forbidden. This playlist may be private or region-restricted.');
+      } else if (status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a few moments.');
+      }
+      
+      throw new Error(`Spotify API error (${status}): ${errorMessage}`);
     }
     throw error;
   }
