@@ -1,7 +1,34 @@
 import { google } from 'googleapis';
+import NodeCache from 'node-cache';
 
 // Initialize YouTube Data API v3
 const youtube = google.youtube('v3');
+
+// Initialize cache with 24-hour TTL (86400 seconds)
+const cache = new NodeCache({ stdTTL: 86400, checkperiod: 3600 });
+
+// Throttle delay in milliseconds
+const THROTTLE_DELAY_MS = 150;
+
+/**
+ * Delay execution for throttling API calls
+ * @param {number} ms - Milliseconds to delay
+ * @returns {Promise<void>}
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Generate a cache key for a track search
+ * @param {string} trackName - The name of the track
+ * @param {string[]} artists - Array of artist names
+ * @returns {string} Cache key
+ */
+function getCacheKey(trackName, artists) {
+  const artistsString = artists.join(' ').toLowerCase();
+  return `${trackName.toLowerCase()}_${artistsString}`;
+}
 
 /**
  * Search YouTube for a track by name and artist
@@ -70,6 +97,37 @@ async function searchTrack(trackName, artists, maxResults = 5) {
 }
 
 /**
+ * Search YouTube for a track with caching
+ * @param {string} trackName - The name of the track
+ * @param {string[]} artists - Array of artist names
+ * @param {number} maxResults - Maximum number of results to return (default: 5)
+ * @returns {Promise<Object[]>} Array of YouTube video matches
+ */
+async function searchTrackCached(trackName, artists, maxResults = 5) {
+  // Generate cache key
+  const cacheKey = getCacheKey(trackName, artists);
+  
+  // Check cache first
+  const cachedResult = cache.get(cacheKey);
+  if (cachedResult !== undefined) {
+    console.log(`Cache hit for: ${trackName} by ${artists.join(', ')}`);
+    return cachedResult;
+  }
+  
+  // Cache miss - fetch from API with throttling
+  console.log(`Cache miss for: ${trackName} by ${artists.join(', ')} - fetching from API`);
+  await delay(THROTTLE_DELAY_MS);
+  
+  // Fetch from YouTube API
+  const results = await searchTrack(trackName, artists, maxResults);
+  
+  // Store in cache
+  cache.set(cacheKey, results);
+  
+  return results;
+}
+
+/**
  * Convert multiple tracks from Spotify format to YouTube matches
  * @param {Object[]} tracks - Array of track objects from Spotify
  * @returns {Promise<Object[]>} Array of tracks with YouTube matches
@@ -84,7 +142,7 @@ export async function convertTracksToYouTube(tracks) {
   // Process tracks sequentially to avoid rate limiting
   for (const track of tracks) {
     try {
-      const youtubeMatches = await searchTrack(track.name, track.artists, 5);
+      const youtubeMatches = await searchTrackCached(track.name, track.artists, 5);
       
       results.push({
         original: {
@@ -177,3 +235,23 @@ export async function getVideoDetails(videoId) {
 export async function createPlaylist(accessToken, title, description, tracks) {
   throw new Error('YouTube playlist creation not yet implemented. OAuth flow required.');
 }
+
+/**
+ * Get cache statistics
+ * @returns {Object} Cache statistics
+ */
+export function getCacheStats() {
+  return cache.getStats();
+}
+
+/**
+ * Clear the cache
+ */
+export function clearCache() {
+  cache.flushAll();
+}
+
+/**
+ * Export the cached search function for use in routes
+ */
+export { searchTrackCached };
