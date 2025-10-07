@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Spotify playlist ID is always 22 characters long
+const SPOTIFY_PLAYLIST_ID_LENGTH = 22;
+
 // Extract playlist ID from Spotify URL
 function extractPlaylistId(url) {
   // Supports: https://open.spotify.com/playlist/{id}
@@ -10,8 +13,9 @@ function extractPlaylistId(url) {
   
   const playlistId = match[1];
   
-  // Additional validation: ensure playlist ID is alphanumeric and reasonable length
-  if (!/^[a-zA-Z0-9]{22}$/.test(playlistId)) {
+  // Additional validation: ensure playlist ID is alphanumeric and correct length
+  const validationRegex = new RegExp(`^[a-zA-Z0-9]{${SPOTIFY_PLAYLIST_ID_LENGTH}}$`);
+  if (!validationRegex.test(playlistId)) {
     throw new Error('Invalid Spotify playlist ID format');
   }
   
@@ -47,15 +51,16 @@ export async function getPlaylistTracks(url) {
     const playlistId = extractPlaylistId(url);
     const accessToken = await getAccessToken();
 
+    // Construct URL with validated and encoded playlist ID
+    // Even though validation ensures alphanumeric only, encoding is a defense-in-depth measure
+    const apiUrl = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}`;
+
     // Fetch playlist data
-    const response = await axios.get(
-      `https://api.spotify.com/v1/playlists/${playlistId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
+    const response = await axios.get(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
       }
-    );
+    });
 
     // Transform to standardized format
     const tracks = response.data.tracks.items
