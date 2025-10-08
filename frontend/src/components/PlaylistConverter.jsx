@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { playlistService } from '../services/api';
 import TrackList from './TrackList';
+import YouTubePlayer from './YouTubePlayer';
 
 function PlaylistConverter() {
   const [url, setUrl] = useState('');
   const [platform, setPlatform] = useState('spotify');
   const [tracks, setTracks] = useState([]);
   const [youtubeResults, setYoutubeResults] = useState(null);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [converting, setConverting] = useState(false);
   const [error, setError] = useState('');
+  
+  const playerRef = useRef(null);
 
   const handleFetch = async (e) => {
     e.preventDefault();
@@ -43,10 +47,47 @@ function PlaylistConverter() {
     try {
       const data = await playlistService.convertToYouTube(tracks);
       setYoutubeResults(data);
+      setCurrentVideoIndex(0);
     } catch (err) {
       setError(err.message);
     } finally {
       setConverting(false);
+    }
+  };
+
+  // Auto-scroll to player when YouTube results load
+  useEffect(() => {
+    if (youtubeResults && playerRef.current) {
+      setTimeout(() => {
+        playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [youtubeResults]);
+
+  const handleVideoChange = (direction) => {
+    if (!youtubeResults) return;
+    
+    const matchedTracks = youtubeResults.results.filter(r => r.youtube.topMatch);
+    
+    if (direction === 'next') {
+      setCurrentVideoIndex((prev) => 
+        prev < matchedTracks.length - 1 ? prev + 1 : 0
+      );
+    } else if (direction === 'prev') {
+      setCurrentVideoIndex((prev) => 
+        prev > 0 ? prev - 1 : matchedTracks.length - 1
+      );
+    }
+  };
+
+  const handleTrackSelect = (index) => {
+    const matchedTracks = youtubeResults.results.filter(r => r.youtube.topMatch);
+    const matchedIndex = matchedTracks.findIndex((_, i) => i === index);
+    if (matchedIndex !== -1) {
+      setCurrentVideoIndex(matchedIndex);
+      if (playerRef.current) {
+        playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   };
 
@@ -207,6 +248,7 @@ function PlaylistConverter() {
       {/* YouTube Results */}
       {youtubeResults && (
         <div>
+          {/* Back Button */}
           <div className="mb-4 flex items-center justify-between bg-white rounded-lg shadow-xl p-4">
             <button
               onClick={() => setYoutubeResults(null)}
@@ -218,10 +260,79 @@ function PlaylistConverter() {
               Back to Spotify Tracks
             </button>
           </div>
+
+          {/* YouTube Player Section */}
+          {youtubeResults.results.filter(r => r.youtube.topMatch).length > 0 && (
+            <div ref={playerRef} className="mb-6 bg-white rounded-lg shadow-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                  <svg className="w-6 h-6 mr-2 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  Now Playing
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">
+                    {currentVideoIndex + 1} / {youtubeResults.results.filter(r => r.youtube.topMatch).length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Current Track Info */}
+              {(() => {
+                const matchedTracks = youtubeResults.results.filter(r => r.youtube.topMatch);
+                const currentTrack = matchedTracks[currentVideoIndex];
+                return currentTrack ? (
+                  <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                    <h3 className="font-semibold text-gray-900">{currentTrack.original.name}</h3>
+                    <p className="text-sm text-gray-600">{currentTrack.original.artists.join(', ')}</p>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* YouTube Player */}
+              {(() => {
+                const matchedTracks = youtubeResults.results.filter(r => r.youtube.topMatch);
+                const currentTrack = matchedTracks[currentVideoIndex];
+                return currentTrack ? (
+                  <YouTubePlayer
+                    videoId={currentTrack.youtube.topMatch.videoId}
+                    onVideoChange={handleVideoChange}
+                  />
+                ) : null;
+              })()}
+
+              {/* Player Controls */}
+              <div className="mt-4 flex items-center justify-center space-x-4">
+                <button
+                  onClick={() => handleVideoChange('prev')}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center"
+                >
+                  <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+                <button
+                  onClick={() => handleVideoChange('next')}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center"
+                >
+                  Next
+                  <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Track List */}
           <TrackList 
             tracks={tracks} 
             youtubeResults={youtubeResults} 
             onRetryFailed={handleRetryFailed}
+            onTrackSelect={handleTrackSelect}
+            currentVideoIndex={currentVideoIndex}
           />
         </div>
       )}

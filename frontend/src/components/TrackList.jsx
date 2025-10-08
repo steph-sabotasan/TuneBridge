@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function TrackList({ tracks, youtubeResults, onRetryFailed }) {
+function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, currentVideoIndex }) {
   const [expandedTracks, setExpandedTracks] = useState(new Set());
 
   const formatDuration = (ms) => {
@@ -86,32 +86,51 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
           {results.map((result, index) => {
             const isExpanded = expandedTracks.has(index);
             const hasAlternates = result.youtube.matches && result.youtube.matches.length > 1;
+            
+            // Check if this is the currently playing track
+            const matchedTracks = results.filter(r => r.youtube.topMatch);
+            const matchedIndex = matchedTracks.findIndex(mt => 
+              mt.original.name === result.original.name && 
+              mt.original.artists.join(',') === result.original.artists.join(',')
+            );
+            const isCurrentlyPlaying = matchedIndex === currentVideoIndex && matchedIndex !== -1;
 
             return (
               <div
                 key={index}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 bg-white flex flex-col"
+                className={`border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 bg-white flex flex-col ${
+                  isCurrentlyPlaying ? 'border-red-500 border-2 ring-2 ring-red-200' : 'border-gray-200'
+                }`}
               >
                 {/* Original Track Info */}
-                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-200">
+                <div className={`p-4 border-b border-gray-200 ${
+                  isCurrentlyPlaying ? 'bg-gradient-to-r from-red-50 to-pink-50' : 'bg-gradient-to-r from-purple-50 to-pink-50'
+                }`}>
                   <h3 className="font-semibold text-gray-900 line-clamp-1 text-sm">
                     {result.original.name}
                   </h3>
                   <p className="text-xs text-gray-600 line-clamp-1 mt-1">
                     {result.original.artists.join(', ')}
                   </p>
+                  {isCurrentlyPlaying && (
+                    <div className="mt-2 flex items-center text-red-600 text-xs font-semibold">
+                      <svg className="w-3 h-3 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                      Now Playing
+                    </div>
+                  )}
                 </div>
 
                 {/* YouTube Match */}
                 {result.youtube.topMatch ? (
                   <div className="flex-1 flex flex-col">
                     {/* Top Match */}
-                    <a
-                      href={result.youtube.topMatch.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
+                    <div className="block group cursor-pointer" onClick={() => {
+                      if (onTrackSelect && matchedIndex !== -1) {
+                        onTrackSelect(matchedIndex);
+                      }
+                    }}>
                       {/* Thumbnail */}
                       <div className="relative overflow-hidden bg-black">
                         <img
@@ -142,8 +161,17 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
                         <p className="text-xs text-gray-600 mt-1 line-clamp-1">
                           📺 {result.youtube.topMatch.channelTitle}
                         </p>
+                        <a
+                          href={result.youtube.topMatch.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Open in YouTube →
+                        </a>
                       </div>
-                    </a>
+                    </div>
 
                     {/* Alternate Matches */}
                     {hasAlternates && (
