@@ -5,9 +5,12 @@ A full-stack application to convert playlists between music streaming platforms.
 ## Features
 
 - 🎧 Fetch playlist tracks from Spotify
-- � Convert Spotify tracks to YouTube Music matches
-- �📋 Display standardized track information (name, artists, album, duration, ISRC)
+- 🎵 Convert Spotify tracks to YouTube Music matches
+- 📋 Display standardized track information (name, artists, album, duration, ISRC)
 - 🎯 Intelligent search using YouTube Data API v3
+- 🔗 **Shareable playlist links** - Convert once, share with entire group!
+- 💾 **Smart caching** - In-memory or Redis for persistent storage
+- 🚀 **Deploy anywhere** - Works on Netlify, Vercel, Render, Railway, and more
 - 🎨 Responsive, modern UI built with React and Tailwind CSS
 - ⚡ Fast and efficient backend powered by Node.js and Express
 - 🔌 Modular architecture for easy platform integration
@@ -19,6 +22,8 @@ A full-stack application to convert playlists between music streaming platforms.
 - **Axios** for HTTP requests
 - **Spotify Web API** integration
 - **YouTube Data API v3** integration via googleapis
+- **Redis** support (optional, for persistent cache)
+- **node-cache** for in-memory caching
 - Modular platform architecture in `/backend/platforms/`
 
 ### Frontend
@@ -32,6 +37,7 @@ A full-stack application to convert playlists between music streaming platforms.
 - Node.js (v18 or higher)
 - Spotify Developer Account ([Sign up here](https://developer.spotify.com/dashboard))
 - Google Cloud Account with YouTube Data API v3 enabled ([Get started here](https://console.cloud.google.com))
+- (Optional) Redis account for persistent cache ([Get free tier from Upstash](https://upstash.com))
 
 ## Setup Instructions
 
