@@ -19,10 +19,11 @@ export const playlistService = {
     }
   },
 
-  async convertToYouTube(tracks) {
+  async convertToYouTube(tracks, spotifyUrl = null) {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/playlist/youtube/convert`, {
-        tracks
+        tracks,
+        spotifyUrl
       });
       return response.data;
     } catch (error) {
@@ -30,6 +31,19 @@ export const playlistService = {
         error.response?.data?.error || 
         error.message || 
         'Failed to convert tracks to YouTube'
+      );
+    }
+  },
+
+  async getPlaylistById(playlistId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/playlist/youtube/${playlistId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.error || 
+        error.message || 
+        'Failed to retrieve playlist'
       );
     }
   }
