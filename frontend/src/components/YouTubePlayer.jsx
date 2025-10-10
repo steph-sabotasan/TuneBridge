@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-function YouTubePlayer({ videoId, onVideoChange }) {
+function YouTubePlayer({ videoId, onVideoChange, autoplay = false }) {
   const playerRef = useRef(null);
   const playerInstanceRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
@@ -30,7 +30,7 @@ function YouTubePlayer({ videoId, onVideoChange }) {
           width: '100%',
           height: '100%',
           playerVars: {
-            autoplay: 1,
+            autoplay: autoplay ? 1 : 0,
             modestbranding: 1,
             rel: 0,
             enablejsapi: 1,
@@ -49,10 +49,14 @@ function YouTubePlayer({ videoId, onVideoChange }) {
         });
       } else {
         // Update existing player with new video
-        playerInstanceRef.current.loadVideoById(videoId);
+        if (autoplay) {
+          playerInstanceRef.current.loadVideoById(videoId);
+        } else {
+          playerInstanceRef.current.cueVideoById(videoId);
+        }
       }
     }
-  }, [isReady, videoId, onVideoChange]);
+  }, [isReady, videoId, onVideoChange, autoplay]);
 
   // Cleanup on unmount
   useEffect(() => {
