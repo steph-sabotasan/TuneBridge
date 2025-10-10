@@ -41,15 +41,15 @@ function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, curre
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center border border-green-200">
               <div className="text-3xl font-bold text-green-600">{summary.successful}</div>
-              <div className="text-sm text-green-800 mt-1 font-medium">Matched</div>
+              <div className="text-sm text-green-800 mt-1 font-medium">Available</div>
             </div>
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 text-center border border-red-200">
-              <div className="text-3xl font-bold text-red-600">{summary.failed}</div>
-              <div className="text-sm text-red-800 mt-1 font-medium">Failed</div>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 text-center border border-orange-200">
+              <div className="text-3xl font-bold text-orange-600">{results.filter(r => r.youtube.isFallback).length}</div>
+              <div className="text-sm text-orange-800 mt-1 font-medium">Search Links</div>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center border border-purple-200">
               <div className="text-3xl font-bold text-purple-600">{summary.successRate}</div>
-              <div className="text-sm text-purple-800 mt-1 font-medium">Success Rate</div>
+              <div className="text-sm text-purple-800 mt-1 font-medium">API Success</div>
             </div>
           </div>
 
@@ -87,13 +87,13 @@ function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, curre
             const isExpanded = expandedTracks.has(index);
             const hasAlternates = result.youtube.matches && result.youtube.matches.length > 1;
             
-            // Check if this is the currently playing track
-            const matchedTracks = results.filter(r => r.youtube.topMatch);
+            // Check if this is the currently playing track (only for non-fallback tracks)
+            const matchedTracks = results.filter(r => r.youtube.topMatch && !r.youtube.isFallback);
             const matchedIndex = matchedTracks.findIndex(mt => 
               mt.original.name === result.original.name && 
               mt.original.artists.join(',') === result.original.artists.join(',')
             );
-            const isCurrentlyPlaying = matchedIndex === currentVideoIndex && matchedIndex !== -1;
+            const isCurrentlyPlaying = matchedIndex === currentVideoIndex && matchedIndex !== -1 && !result.youtube.isFallback;
 
             return (
               <div
@@ -126,13 +126,36 @@ function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, curre
                 {result.youtube.topMatch ? (
                   <div className="flex-1 flex flex-col">
                     {/* Top Match */}
-                    <div className="block group cursor-pointer" onClick={() => {
-                      if (onTrackSelect && matchedIndex !== -1) {
-                        onTrackSelect(matchedIndex);
-                      }
-                    }}>
-                      {/* Thumbnail */}
-                      <div className="relative overflow-hidden bg-black">
+                    <div 
+                      className={`block group ${result.youtube.isFallback ? '' : 'cursor-pointer'}`}
+                      onClick={() => {
+                        if (!result.youtube.isFallback && onTrackSelect && matchedIndex !== -1) {
+                          onTrackSelect(matchedIndex);
+                        }
+                      }}
+                    >
+                      {/* Thumbnail or Fallback */}
+                      {result.youtube.isFallback ? (
+                        <a 
+                          href={result.youtube.topMatch.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <div className="relative bg-gradient-to-br from-orange-50 to-yellow-50 h-48 flex items-center justify-center hover:from-orange-100 hover:to-yellow-100 transition-all duration-200 border-b-2 border-orange-200">
+                            <div className="text-center p-4">
+                              <svg className="w-16 h-16 mx-auto mb-3 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                              </svg>
+                              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full inline-block shadow-md mb-2">
+                                ⚡ Search Link
+                              </div>
+                              <p className="text-xs text-gray-600 font-medium">Click to search on YouTube</p>
+                            </div>
+                          </div>
+                        </a>
+                      ) : (
+                        <div className="relative overflow-hidden bg-black">
                         <img
                           src={`https://img.youtube.com/vi/${result.youtube.topMatch.videoId}/mqdefault.jpg`}
                           alt={result.youtube.topMatch.title}
@@ -148,28 +171,49 @@ function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, curre
                           </div>
                         </div>
                         {/* Success Badge */}
-                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                          ✓ Matched
-                        </div>
+                        {!result.youtube.isFallback && (
+                          <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                            ✓ Matched
+                          </div>
+                        )}
                       </div>
+                      )}
 
                       {/* Video Info */}
                       <div className="p-3">
-                        <h4 className="font-medium text-sm text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors">
-                          {result.youtube.topMatch.title}
+                        <h4 className={`font-medium text-sm line-clamp-2 transition-colors ${
+                          result.youtube.isFallback 
+                            ? 'text-gray-800' 
+                            : 'text-gray-900 group-hover:text-red-600'
+                        }`}>
+                          {result.youtube.isFallback 
+                            ? `${result.original.name} - ${result.original.artists.join(', ')}`
+                            : result.youtube.topMatch.title
+                          }
                         </h4>
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-1">
-                          📺 {result.youtube.topMatch.channelTitle}
-                        </p>
-                        <a
-                          href={result.youtube.topMatch.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Open in YouTube →
-                        </a>
+                        {result.youtube.isFallback ? (
+                          <p className="text-xs text-orange-600 mt-2 font-semibold flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                            </svg>
+                            {result.youtube.fallbackReason || 'API quota reached'}
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                              📺 {result.youtube.topMatch.channelTitle}
+                            </p>
+                            <a
+                              href={result.youtube.topMatch.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block mt-2 text-xs font-medium text-red-600 hover:text-red-700"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Open in YouTube →
+                            </a>
+                          </>
+                        )}
                       </div>
                     </div>
 
