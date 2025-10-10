@@ -1,11 +1,13 @@
 import express from 'express';
 import { getPlaylistTracks } from '../platforms/spotify.js';
-import { convertTracksToYouTube } from '../platforms/youtube.js';
+import { convertTracksToYouTube, resetQuotaTracking, getCacheStats } from '../platforms/youtube.js';
+import { generatePlaylistId, savePlaylist, getPlaylist } from '../storage/playlists.js';
+import { conversionLimiter, fetchLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Get playlist tracks from a platform
-router.post('/fetch', async (req, res) => {
+// Get playlist tracks from a platform (with rate limiting)
+router.post('/fetch', fetchLimiter, async (req, res) => {
   try {
     const { url, platform } = req.body;
 
@@ -36,10 +38,10 @@ router.post('/fetch', async (req, res) => {
   }
 });
 
-// Convert Spotify tracks to YouTube matches
-router.post('/youtube/convert', async (req, res) => {
+// Convert Spotify tracks to YouTube matches (with stricter rate limiting)
+router.post('/youtube/convert', conversionLimiter, async (req, res) => {
   try {
-    const { tracks } = req.body;
+    const { tracks, spotifyUrl } = req.body;
 
     if (!tracks) {
       return res.status(400).json({ error: 'Tracks array is required' });
@@ -62,26 +64,76 @@ router.post('/youtube/convert', async (req, res) => {
       }
     }
 
-    // Convert tracks to YouTube matches
-    const results = await convertTracksToYouTube(tracks);
+    // Convert tracks to YouTube matches (now returns object with results and summary)
+    const data = await convertTracksToYouTube(tracks);
 
-    // Calculate success rate
-    const successfulMatches = results.filter(r => r.youtube.topMatch !== null).length;
-    const totalTracks = results.length;
-    const successRate = totalTracks > 0 ? (successfulMatches / totalTracks * 100).toFixed(1) : 0;
+    // Generate playlist ID and save if spotifyUrl provided
+    let playlistId = null;
+    if (spotifyUrl) {
+      playlistId = generatePlaylistId(spotifyUrl);
+      await savePlaylist(playlistId, data, spotifyUrl);
+    }
 
-    res.json({ 
-      results,
-      summary: {
-        total: totalTracks,
-        successful: successfulMatches,
-        failed: totalTracks - successfulMatches,
-        successRate: `${successRate}%`
-      }
+    // Return data with playlist ID for shareable link
+    res.json({
+      ...data,
+      playlistId
     });
   } catch (error) {
     console.error('Error converting tracks to YouTube:', error);
     res.status(500).json({ error: error.message || 'Failed to convert tracks to YouTube' });
+  }
+});
+
+// Get YouTube API quota status
+router.get('/youtube/quota/status', async (req, res) => {
+  try {
+    const stats = getCacheStats();
+    res.json({
+      quotaUsed: stats.quotaUsed,
+      quotaLimit: stats.quotaLimit,
+      quotaRemaining: stats.quotaLimit - stats.quotaUsed,
+      quotaExceeded: stats.quotaExceeded,
+      lastResetDate: stats.lastResetDate,
+      searchesUsed: Math.floor(stats.quotaUsed / 100),
+      searchesRemaining: 20 - Math.floor(stats.quotaUsed / 100)
+    });
+  } catch (error) {
+    console.error('Error getting quota status:', error);
+    res.status(500).json({ error: error.message || 'Failed to get quota status' });
+  }
+});
+
+// Manually reset YouTube API quota tracking (for testing/admin)
+router.post('/youtube/quota/reset', async (req, res) => {
+  try {
+    const result = resetQuotaTracking();
+    res.json(result);
+  } catch (error) {
+    console.error('Error resetting quota:', error);
+    res.status(500).json({ error: error.message || 'Failed to reset quota' });
+  }
+});
+
+// Get a saved playlist by ID
+router.get('/youtube/:playlistId', async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+
+    if (!playlistId) {
+      return res.status(400).json({ error: 'Playlist ID is required' });
+    }
+
+    const playlist = await getPlaylist(playlistId);
+
+    if (!playlist) {
+      return res.status(404).json({ error: 'Playlist not found or expired' });
+    }
+
+    res.json(playlist);
+  } catch (error) {
+    console.error('Error retrieving playlist:', error);
+    res.status(500).json({ error: error.message || 'Failed to retrieve playlist' });
   }
 });
 
