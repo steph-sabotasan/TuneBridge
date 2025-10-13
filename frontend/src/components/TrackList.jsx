@@ -32,39 +32,41 @@ function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, curre
           YouTube Music Results
         </h2>
 
-        {/* Summary Stats */}
-        <div className="mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
-              <div className="text-3xl font-bold text-blue-600">{summary.total}</div>
-              <div className="text-sm text-blue-800 mt-1 font-medium">Total Tracks</div>
+        {/* Summary Stats - Development Mode Only */}
+        {import.meta.env.DEV && (
+          <div className="mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
+                <div className="text-3xl font-bold text-blue-600">{summary.total}</div>
+                <div className="text-sm text-blue-800 mt-1 font-medium">Total Tracks</div>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center border border-green-200">
+                <div className="text-3xl font-bold text-green-600">{summary.successful}</div>
+                <div className="text-sm text-green-800 mt-1 font-medium">Available</div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 text-center border border-orange-200">
+                <div className="text-3xl font-bold text-orange-600">{results.filter(r => r.youtube.isFallback).length}</div>
+                <div className="text-sm text-orange-800 mt-1 font-medium">Search Links</div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center border border-purple-200">
+                <div className="text-3xl font-bold text-purple-600">{summary.successRate}</div>
+                <div className="text-sm text-purple-800 mt-1 font-medium">API Success</div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center border border-green-200">
-              <div className="text-3xl font-bold text-green-600">{summary.successful}</div>
-              <div className="text-sm text-green-800 mt-1 font-medium">Available</div>
-            </div>
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 text-center border border-orange-200">
-              <div className="text-3xl font-bold text-orange-600">{results.filter(r => r.youtube.isFallback).length}</div>
-              <div className="text-sm text-orange-800 mt-1 font-medium">Search Links</div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center border border-purple-200">
-              <div className="text-3xl font-bold text-purple-600">{summary.successRate}</div>
-              <div className="text-sm text-purple-800 mt-1 font-medium">API Success</div>
-            </div>
-          </div>
 
-          {/* Progress Bar */}
-          <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-500 flex items-center justify-center"
-              style={{ width: `${successPercentage}%` }}
-            >
-              {successPercentage > 10 && (
-                <span className="text-xs font-semibold text-white">{summary.successRate}</span>
-              )}
+            {/* Progress Bar */}
+            <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-500 flex items-center justify-center"
+                style={{ width: `${successPercentage}%` }}
+              >
+                {successPercentage > 10 && (
+                  <span className="text-xs font-semibold text-white">{summary.successRate}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Retry Failed Tracks Button */}
         {failedTracks.length > 0 && onRetryFailed && (
