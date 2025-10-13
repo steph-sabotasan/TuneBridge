@@ -13,6 +13,7 @@ pnpm-lock.yaml
 dist/
 build/
 *.log
+.vite/
 
 # IDE
 .vscode/
