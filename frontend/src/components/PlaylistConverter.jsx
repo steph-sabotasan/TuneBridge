@@ -13,6 +13,7 @@ function PlaylistConverter() {
   const [loading, setLoading] = useState(false);
   const [converting, setConverting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedAlternates, setSelectedAlternates] = useState({});
   
   const playerRef = useRef(null);
 
@@ -90,6 +91,22 @@ function PlaylistConverter() {
         playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
+  };
+
+  const handleSelectAlternate = (trackIndex, matchIndex) => {
+    setSelectedAlternates(prev => ({
+      ...prev,
+      [trackIndex]: matchIndex
+    }));
+  };
+
+  const getSelectedVideoId = (trackIndex) => {
+    if (!youtubeResults) return null;
+    const result = youtubeResults.results[trackIndex];
+    if (!result || !result.youtube.matches) return result?.youtube.topMatch?.videoId;
+    
+    const selectedIndex = selectedAlternates[trackIndex] || 0;
+    return result.youtube.matches[selectedIndex]?.videoId || result.youtube.topMatch.videoId;
   };
 
   const handleRetryFailed = async (failedTracks) => {
@@ -368,13 +385,23 @@ function PlaylistConverter() {
               {(() => {
                 const matchedTracks = youtubeResults.results.filter(r => r.youtube.topMatch && !r.youtube.isFallback);
                 const currentTrack = matchedTracks[currentVideoIndex];
-                return currentTrack ? (
+                if (!currentTrack) return null;
+                
+                // Find the original track index to get the selected alternate
+                const originalTrackIndex = youtubeResults.results.findIndex(r => 
+                  r.original.name === currentTrack.original.name && 
+                  r.original.artists.join(',') === currentTrack.original.artists.join(',')
+                );
+                
+                const videoId = getSelectedVideoId(originalTrackIndex);
+                
+                return (
                   <YouTubePlayer
-                    videoId={currentTrack.youtube.topMatch.videoId}
+                    videoId={videoId}
                     onVideoChange={handleVideoChange}
                     autoplay={autoplay}
                   />
-                ) : null;
+                );
               })()}
 
               {/* Player Controls */}
@@ -421,6 +448,7 @@ function PlaylistConverter() {
             onRetryFailed={handleRetryFailed}
             onTrackSelect={handleTrackSelect}
             currentVideoIndex={currentVideoIndex}
+            onSelectAlternate={handleSelectAlternate}
           />
         </div>
       )}
