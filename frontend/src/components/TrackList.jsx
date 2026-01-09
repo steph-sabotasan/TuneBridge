@@ -121,10 +121,15 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
                           className="w-full h-48 object-cover group-hover:opacity-75 group-hover:scale-105 transition-all duration-200"
                           loading="lazy"
                         />
-                        {/* Play overlay - using official YouTube red #FF0000 */}
+                        {/* 
+                          Play overlay - Using neutral styling (NOT YouTube red).
+                          YouTube Brand Compliance: We use a simple play icon with our app's 
+                          neutral colors. Per YouTube guidelines, we must not imitate YouTube's 
+                          trade dress or distinctive color combinations.
+                        */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="rounded-full p-4" style={{ backgroundColor: '#FF0000' }}>
-                            {/* Icon size: 32px (w-8 h-8) */}
+                          <div className="rounded-full p-4 bg-black/70">
+                            {/* Simple play triangle icon - not YouTube branded */}
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z"/>
                             </svg>
@@ -138,7 +143,7 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
 
                       {/* Video Info */}
                       <div className="p-3">
-                        <h4 className="font-medium text-sm text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors">
+                        <h4 className="font-medium text-sm text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
                           {result.youtube.topMatch.title}
                         </h4>
                         <p className="text-xs text-gray-600 mt-1 line-clamp-1">
@@ -191,7 +196,7 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
                                   loading="lazy"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-red-600">
+                                  <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600">
                                     {match.title}
                                   </p>
                                   <p className="text-xs text-gray-500 line-clamp-1">
