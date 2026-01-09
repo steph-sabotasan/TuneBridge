@@ -174,11 +174,17 @@ function PlaylistConverter() {
           <TrackList tracks={tracks} />
           
           {/* Convert to YouTube Button */}
+          {/* 
+            YouTube Brand Compliance: Using our app's purple theme instead of YouTube red.
+            The YouTube icon is used only for content attribution (20px), not as branded button styling.
+            Per YouTube guidelines: "Do not adopt marks, logos, slogans, or designs that are 
+            confusingly similar to YouTube trademarks or that imitate YouTube's trade dress."
+          */}
           <div className="mt-6 bg-white rounded-lg shadow-xl p-6">
             <button
               onClick={handleConvertToYouTube}
               disabled={converting}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
             >
               {converting ? (
                 <>
@@ -191,11 +197,11 @@ function PlaylistConverter() {
                 </>
               ) : (
                 <>
-                  {/* Icon size: 24px (w-6 h-6) - YouTube branding minimum size requirement */}
-                  <svg className="w-6 h-6 mr-2" fill="#FF0000" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  {/* Icon size: 20px (w-5 h-5) - Using music note icon, NOT YouTube logo per branding guidelines */}
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
                   </svg>
-                  Find on YouTube
+                  Open on YouTube
                 </>
               )}
             </button>
