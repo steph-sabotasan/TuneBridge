@@ -300,6 +300,26 @@ The codebase includes a placeholder for OAuth-based playlist creation. This will
 - [ ] Download playlist as CSV/JSON
 - [ ] Frontend UI for YouTube conversion
 
+## Legal & Compliance
+
+### YouTube Data API Services
+
+TuneBridge uses YouTube Data API Services. By using TuneBridge, you agree to the following:
+
+- [YouTube Terms of Service](https://www.youtube.com/t/terms)
+- [Google Privacy Policy](https://policies.google.com/privacy)
+
+### Privacy & Terms
+
+- **Privacy Policy:** Available at `/privacy` when running the application
+- **Terms of Service:** Available at `/terms` when running the application
+
+### Contact
+
+For questions, concerns, or inquiries about TuneBridge:
+
+📧 **Email:** [tunebridge.contact@gmail.com](mailto:tunebridge.contact@gmail.com)
+
 ## License
 
 MIT

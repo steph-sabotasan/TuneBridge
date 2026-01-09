@@ -182,23 +182,25 @@ function PlaylistConverter() {
             >
               {converting ? (
                 <>
+                  {/* Icon size: 20px (h-5 w-5) */}
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Converting to YouTube Music...
+                  Finding on YouTube...
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  {/* Icon size: 24px (w-6 h-6) - YouTube branding minimum size requirement */}
+                  <svg className="w-6 h-6 mr-2" fill="#FF0000" viewBox="0 0 24 24">
                     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                   </svg>
-                  Convert to YouTube Music
+                  Find on YouTube
                 </>
               )}
             </button>
             <p className="mt-3 text-sm text-gray-600 text-center">
-              🎵 Find these tracks on YouTube Music
+              🎵 Find these tracks on YouTube
             </p>
           </div>
         </>
