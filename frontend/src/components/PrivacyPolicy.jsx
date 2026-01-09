@@ -75,8 +75,7 @@ function PrivacyPolicy() {
               <li className="flex items-start">
                 <span className="text-green-600 mr-2">✓</span>
                 <span>
-                  <strong>No Cookies for Tracking:</strong> We do not use cookies to track
-                  your activity across websites.
+                  <strong>No Cookies or Device Storage for Tracking:</strong> TuneBridge does not place, store, or access cookies or similar technologies (such as local storage, session storage, or browser fingerprinting) on your device for tracking or data collection purposes. We do not allow third parties to collect data through our application. However, when you interact with embedded YouTube content or visit YouTube/Spotify through links in our application, those third-party services may use their own cookies and tracking technologies according to their respective privacy policies.
                 </span>
               </li>
             </ul>
@@ -102,6 +101,9 @@ function PrivacyPolicy() {
             This information is used solely for the purpose of matching tracks from your
             source playlist to corresponding videos on YouTube. This data is processed
             in real-time and is not stored on our servers.
+          </p>
+          <p className="text-gray-600 mt-4 font-medium">
+            We do not share any YouTube API data or user information with any internal or external third parties.
           </p>
         </section>
 

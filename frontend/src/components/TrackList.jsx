@@ -121,9 +121,9 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
                           className="w-full h-48 object-cover group-hover:opacity-75 group-hover:scale-105 transition-all duration-200"
                           loading="lazy"
                         />
-                        {/* Play overlay */}
+                        {/* Play overlay - using official YouTube red #FF0000 */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="bg-red-600 rounded-full p-4">
+                          <div className="rounded-full p-4" style={{ backgroundColor: '#FF0000' }}>
                             {/* Icon size: 32px (w-8 h-8) */}
                             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z"/>
