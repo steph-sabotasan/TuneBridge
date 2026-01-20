@@ -350,12 +350,11 @@ function PlaylistConverter() {
                   const shareUrl = `${window.location.origin}/playlist/${youtubeResults.playlistId}`;
                   navigator.clipboard.writeText(shareUrl);
                   setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
+                  setTimeout(() => setCopied(false), 1500);
                 }}
-                disabled={copied}
                 className={`text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition-all ${
                   copied
-                    ? 'bg-gray-400 text-gray-200 cursor-default'
+                    ? 'bg-green-700 text-white scale-95'
                     : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:shadow-lg'
                 }`}
               >
