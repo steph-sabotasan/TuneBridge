@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
-function TrackList({ tracks, youtubeResults, onRetryFailed }) {
+function TrackList({ tracks, youtubeResults, onRetryFailed, onTrackSelect, currentVideoIndex, onSelectAlternate }) {
   const [expandedTracks, setExpandedTracks] = useState(new Set());
+  const [selectedAlternates, setSelectedAlternates] = useState({});
 
   const formatDuration = (ms) => {
     const minutes = Math.floor(ms / 60000);
@@ -19,6 +20,26 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
     setExpandedTracks(newExpanded);
   };
 
+  const handleSelectAlternate = (trackIndex, matchIndex) => {
+    setSelectedAlternates(prev => ({
+      ...prev,
+      [trackIndex]: matchIndex
+    }));
+    
+    // Call parent callback if provided
+    if (onSelectAlternate) {
+      onSelectAlternate(trackIndex, matchIndex);
+    }
+  };
+
+  const getSelectedMatch = (result, trackIndex) => {
+    const selectedIndex = selectedAlternates[trackIndex];
+    if (selectedIndex !== undefined && result.youtube.matches) {
+      return result.youtube.matches[selectedIndex] || result.youtube.topMatch;
+    }
+    return result.youtube.topMatch;
+  };
+
   // If YouTube results are provided, show YouTube results view
   if (youtubeResults) {
     const { summary, results } = youtubeResults;
@@ -32,39 +53,41 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
           YouTube Results
         </h2>
 
-        {/* Summary Stats */}
-        <div className="mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
-              <div className="text-3xl font-bold text-blue-600">{summary.total}</div>
-              <div className="text-sm text-blue-800 mt-1 font-medium">Total Tracks</div>
+        {/* Summary Stats - Development Mode Only */}
+        {import.meta.env.DEV && (
+          <div className="mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
+                <div className="text-3xl font-bold text-blue-600">{summary.total}</div>
+                <div className="text-sm text-blue-800 mt-1 font-medium">Total Tracks</div>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center border border-green-200">
+                <div className="text-3xl font-bold text-green-600">{summary.successful}</div>
+                <div className="text-sm text-green-800 mt-1 font-medium">Available</div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 text-center border border-orange-200">
+                <div className="text-3xl font-bold text-orange-600">{results.filter(r => r.youtube.isFallback).length}</div>
+                <div className="text-sm text-orange-800 mt-1 font-medium">Search Links</div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center border border-purple-200">
+                <div className="text-3xl font-bold text-purple-600">{summary.successRate}</div>
+                <div className="text-sm text-purple-800 mt-1 font-medium">API Success</div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center border border-green-200">
-              <div className="text-3xl font-bold text-green-600">{summary.successful}</div>
-              <div className="text-sm text-green-800 mt-1 font-medium">Matched</div>
-            </div>
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 text-center border border-red-200">
-              <div className="text-3xl font-bold text-red-600">{summary.failed}</div>
-              <div className="text-sm text-red-800 mt-1 font-medium">Failed</div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center border border-purple-200">
-              <div className="text-3xl font-bold text-purple-600">{summary.successRate}</div>
-              <div className="text-sm text-purple-800 mt-1 font-medium">Success Rate</div>
-            </div>
-          </div>
 
-          {/* Progress Bar */}
-          <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-500 flex items-center justify-center"
-              style={{ width: `${successPercentage}%` }}
-            >
-              {successPercentage > 10 && (
-                <span className="text-xs font-semibold text-white">{summary.successRate}</span>
-              )}
+            {/* Progress Bar */}
+            <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-500 flex items-center justify-center"
+                style={{ width: `${successPercentage}%` }}
+              >
+                {successPercentage > 10 && (
+                  <span className="text-xs font-semibold text-white">{summary.successRate}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Retry Failed Tracks Button */}
         {failedTracks.length > 0 && onRetryFailed && (
@@ -87,70 +110,145 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
           {results.map((result, index) => {
             const isExpanded = expandedTracks.has(index);
             const hasAlternates = result.youtube.matches && result.youtube.matches.length > 1;
+            const selectedMatch = getSelectedMatch(result, index);
+            const selectedIndex = selectedAlternates[index] || 0;
+            
+            // Check if this is the currently playing track (only for non-fallback tracks)
+            const matchedTracks = results.filter(r => r.youtube.topMatch && !r.youtube.isFallback);
+            const matchedIndex = matchedTracks.findIndex(mt => 
+              mt.original.name === result.original.name && 
+              mt.original.artists.join(',') === result.original.artists.join(',')
+            );
+            const isCurrentlyPlaying = matchedIndex === currentVideoIndex && matchedIndex !== -1 && !result.youtube.isFallback;
 
             return (
               <div
                 key={index}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 bg-white flex flex-col"
+                className={`border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 bg-white flex flex-col ${
+                  isCurrentlyPlaying ? 'border-purple-500 border-2 ring-2 ring-purple-200' : 'border-gray-200'
+                }`}
               >
                 {/* Original Track Info */}
-                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-200">
+                <div className={`p-4 border-b border-gray-200 ${
+                  isCurrentlyPlaying ? 'bg-gradient-to-r from-purple-50 to-pink-50' : 'bg-gradient-to-r from-purple-50 to-pink-50'
+                }`}>
                   <h3 className="font-semibold text-gray-900 line-clamp-1 text-sm">
                     {result.original.name}
                   </h3>
                   <p className="text-xs text-gray-600 line-clamp-1 mt-1">
                     {result.original.artists.join(', ')}
                   </p>
+                  {isCurrentlyPlaying && (
+                    <div className="mt-2 flex items-center text-purple-600 text-xs font-semibold">
+                      <svg className="w-3 h-3 mr-1 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                      Now Playing
+                    </div>
+                  )}
                 </div>
 
                 {/* YouTube Match */}
                 {result.youtube.topMatch ? (
                   <div className="flex-1 flex flex-col">
                     {/* Top Match */}
-                    <a
-                      href={result.youtube.topMatch.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block group"
+                    <div 
+                      className={`block group ${result.youtube.isFallback ? '' : 'cursor-pointer'}`}
+                      onClick={() => {
+                        if (!result.youtube.isFallback && onTrackSelect && matchedIndex !== -1) {
+                          onTrackSelect(matchedIndex);
+                        }
+                      }}
                     >
-                      {/* Thumbnail */}
-                      <div className="relative overflow-hidden bg-black">
-                        <img
-                          src={`https://img.youtube.com/vi/${result.youtube.topMatch.videoId}/mqdefault.jpg`}
-                          alt={result.youtube.topMatch.title}
-                          className="w-full h-48 object-cover group-hover:opacity-75 group-hover:scale-105 transition-all duration-200"
-                          loading="lazy"
-                        />
-                        {/* 
-                          Play overlay - Using neutral styling (NOT YouTube red).
-                          YouTube Brand Compliance: We use a simple play icon with our app's 
-                          neutral colors. Per YouTube guidelines, we must not imitate YouTube's 
-                          trade dress or distinctive color combinations.
-                        */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <div className="rounded-full p-4 bg-black/70">
-                            {/* Simple play triangle icon - not YouTube branded */}
-                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z"/>
-                            </svg>
+                      {/* Thumbnail or Fallback */}
+                      {result.youtube.isFallback ? (
+                        <a 
+                          href={result.youtube.topMatch.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <div className="relative bg-gradient-to-br from-orange-50 to-yellow-50 h-48 flex items-center justify-center hover:from-orange-100 hover:to-yellow-100 transition-all duration-200 border-b-2 border-orange-200">
+                            <div className="text-center p-4">
+                              {/* Generic search icon - NOT YouTube logo */}
+                              <svg className="w-16 h-16 mx-auto mb-3 text-orange-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                              </svg>
+                              <div className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full inline-block shadow-md mb-2">
+                                ⚡ Search Link
+                              </div>
+                              <p className="text-xs text-gray-600 font-medium">Click to search on YouTube</p>
+                            </div>
                           </div>
+                        </a>
+                      ) : (
+                        <div className="relative overflow-hidden bg-black">
+                          <img
+                            src={`https://img.youtube.com/vi/${selectedMatch.videoId}/mqdefault.jpg`}
+                            alt={selectedMatch.title}
+                            className="w-full h-48 object-cover group-hover:opacity-75 group-hover:scale-105 transition-all duration-200"
+                            loading="lazy"
+                          />
+                          {/* 
+                            Play overlay - Using neutral styling (NOT YouTube red).
+                            YouTube Brand Compliance: We use a simple play icon with our app's 
+                            neutral colors. Per YouTube guidelines, we must not imitate YouTube's 
+                            trade dress or distinctive color combinations.
+                          */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="rounded-full p-4 bg-black/70">
+                              {/* Simple play triangle icon - not YouTube branded */}
+                              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </div>
+                          </div>
+                          {/* Success Badge */}
+                          {!result.youtube.isFallback && (
+                            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                              {selectedIndex > 0 ? `✓ Alt ${selectedIndex + 1}` : '✓ Matched'}
+                            </div>
+                          )}
                         </div>
-                        {/* Success Badge */}
-                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                          ✓ Matched
-                        </div>
-                      </div>
+                      )}
 
                       {/* Video Info */}
                       <div className="p-3">
-                        <h4 className="font-medium text-sm text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                          {result.youtube.topMatch.title}
+                        <h4 className={`font-medium text-sm line-clamp-2 transition-colors ${
+                          result.youtube.isFallback 
+                            ? 'text-gray-800' 
+                            : 'text-gray-900 group-hover:text-purple-600'
+                        }`}>
+                          {result.youtube.isFallback 
+                            ? `${result.original.name} - ${result.original.artists.join(', ')}`
+                            : selectedMatch.title
+                          }
                         </h4>
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-1">
-                          📺 {result.youtube.topMatch.channelTitle}
-                        </p>
+                        {result.youtube.isFallback ? (
+                          <p className="text-xs text-orange-600 mt-2 font-semibold flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                            </svg>
+                            {result.youtube.fallbackReason || 'API quota reached'}
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                              📺 {selectedMatch.channelTitle}
+                            </p>
+                            <a
+                              href={selectedMatch.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block mt-2 text-xs font-medium text-purple-600 hover:text-purple-700"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Open in YouTube →
+                            </a>
+                          </>
+                        )}
                       </div>
-                    </a>
+                    </div>
 
                     {/* Alternate Matches */}
                     {hasAlternates && (
@@ -181,30 +279,58 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
                         {/* Expanded Alternates */}
                         {isExpanded && (
                           <div className="px-3 pb-3 space-y-2 bg-gray-50">
-                            {result.youtube.matches.slice(1).map((match, matchIndex) => (
-                              <a
-                                key={matchIndex}
-                                href={match.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-start space-x-2 p-2 rounded hover:bg-white border border-gray-200 hover:border-purple-300 transition-all group"
-                              >
-                                <img
-                                  src={`https://img.youtube.com/vi/${match.videoId}/default.jpg`}
-                                  alt={match.title}
-                                  className="w-16 h-12 rounded object-cover flex-shrink-0"
-                                  loading="lazy"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600">
-                                    {match.title}
-                                  </p>
-                                  <p className="text-xs text-gray-500 line-clamp-1">
-                                    {match.channelTitle}
-                                  </p>
+                            {result.youtube.matches.map((match, matchIndex) => {
+                              const isSelected = matchIndex === selectedIndex;
+                              return (
+                                <div
+                                  key={matchIndex}
+                                  onClick={() => handleSelectAlternate(index, matchIndex)}
+                                  className={`flex items-start space-x-2 p-2 rounded border transition-all group cursor-pointer ${
+                                    isSelected 
+                                      ? 'bg-green-50 border-green-500 ring-2 ring-green-200'
+                                      : 'bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                                  }`}
+                                >
+                                  <div className="relative flex-shrink-0">
+                                    <img
+                                      src={`https://img.youtube.com/vi/${match.videoId}/default.jpg`}
+                                      alt={match.title}
+                                      className="w-16 h-12 rounded object-cover"
+                                      loading="lazy"
+                                    />
+                                    {isSelected && (
+                                      <div className="absolute inset-0 flex items-center justify-center bg-green-600 bg-opacity-70 rounded">
+                                        <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <p className={`text-xs font-medium line-clamp-2 ${
+                                        isSelected ? 'text-green-900' : 'text-gray-900 group-hover:text-purple-600'
+                                      }`}>
+                                        {match.title}
+                                      </p>
+                                      {isSelected && (
+                                        <span className="flex-shrink-0 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                          Selected
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 line-clamp-1 mt-1">
+                                      {match.channelTitle}
+                                    </p>
+                                    {matchIndex === 0 && !isSelected && (
+                                      <p className="text-xs text-purple-600 font-medium mt-1">
+                                        Default match
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                              </a>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -216,7 +342,7 @@ function TrackList({ tracks, youtubeResults, onRetryFailed }) {
                       <div className="text-4xl mb-2">❌</div>
                       <p className="text-sm font-medium text-gray-700 mb-1">No Match Found</p>
                       {result.youtube.error && (
-                        <p className="text-xs text-red-600 line-clamp-2">{result.youtube.error}</p>
+                        <p className="text-xs text-orange-600 line-clamp-2">{result.youtube.error}</p>
                       )}
                     </div>
                   </div>

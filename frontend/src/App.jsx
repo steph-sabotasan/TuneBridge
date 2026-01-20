@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PlaylistConverter from './components/PlaylistConverter';
+import SharedPlaylist from './components/SharedPlaylist';
 import Footer from './components/Footer';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -27,6 +27,7 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/playlist/:playlistId" element={<SharedPlaylist />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
         </Routes>
