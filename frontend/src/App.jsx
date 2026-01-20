@@ -9,11 +9,18 @@ function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8 flex-1">
       <header className="text-center mb-12">
-        <Link to="/" className="inline-block hover:scale-105 transition-transform">
+        <a 
+          href="/" 
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = '/';
+          }}
+          className="inline-block hover:scale-105 transition-transform cursor-pointer"
+        >
           <h1 className="text-5xl font-bold text-white mb-4">
             🎵 TuneBridge
           </h1>
-        </Link>
+        </a>
         <p className="text-xl text-gray-300">
           Convert playlists between music platforms
         </p>
