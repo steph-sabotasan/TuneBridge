@@ -3,12 +3,9 @@ function Footer() {
     <footer className="bg-gray-900 border-t border-gray-800 mt-auto">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand & Description */}
+          {/* Brand */}
           <div>
             <h3 className="text-xl font-bold text-white mb-3">🎵 TuneBridge</h3>
-            <p className="text-gray-400 text-sm">
-              Convert playlists between music streaming platforms with ease.
-            </p>
           </div>
 
           {/* Legal Links */}
