@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import PlaylistConverter from './components/PlaylistConverter';
 import SharedPlaylist from './components/SharedPlaylist';
 import Footer from './components/Footer';
@@ -9,9 +9,11 @@ function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8 flex-1">
       <header className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-white mb-4">
-          🎵 TuneBridge
-        </h1>
+        <Link to="/" className="inline-block hover:scale-105 transition-transform">
+          <h1 className="text-5xl font-bold text-white mb-4">
+            🎵 TuneBridge
+          </h1>
+        </Link>
         <p className="text-xl text-gray-300">
           Convert playlists between music platforms
         </p>
