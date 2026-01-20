@@ -348,7 +348,6 @@ function PlaylistConverter() {
                 onClick={() => {
                   const shareUrl = `${window.location.origin}/playlist/${youtubeResults.playlistId}`;
                   navigator.clipboard.writeText(shareUrl);
-                  alert('Link copied! Share this with your Music League group so everyone can listen.');
                 }}
                 className="text-sm bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
               >
