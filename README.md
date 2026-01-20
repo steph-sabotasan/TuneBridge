@@ -1,16 +1,22 @@
 # TuneBridge 🎵
 
-A full-stack application to convert playlists between music streaming platforms. Supports Spotify → YouTube Music conversion with intelligent track matching.
+A full-stack application to convert playlists between music streaming platforms. Supports Spotify → YouTube conversion with intelligent track matching and an embedded player.
+
+**Live Demo:** [tune-bridge.netlify.app](https://tune-bridge.netlify.app)
 
 ## Features
 
 - 🎧 Fetch playlist tracks from Spotify
-- � Convert Spotify tracks to YouTube Music matches
-- �📋 Display standardized track information (name, artists, album, duration, ISRC)
+- 🔍 Convert Spotify tracks to YouTube matches
+- 📋 Display standardized track information (name, artists, album, duration, ISRC)
 - 🎯 Intelligent search using YouTube Data API v3
+- ▶️ Embedded YouTube player with autoplay and track navigation
+- 🔗 Shareable playlist links - share converted playlists with friends
+- 🎛️ Alternate video selection - pick from multiple YouTube matches per track
 - 🎨 Responsive, modern UI built with React and Tailwind CSS
-- ⚡ Fast and efficient backend powered by Node.js and Express
-- 🔌 Modular architecture for easy platform integration
+- ⚡ Fast parallel batch processing for quick conversions
+- 🛡️ Rate limiting to prevent API abuse
+- 💾 Redis/memory caching for playlist storage
 
 ## Tech Stack
 
@@ -19,11 +25,15 @@ A full-stack application to convert playlists between music streaming platforms.
 - **Axios** for HTTP requests
 - **Spotify Web API** integration
 - **YouTube Data API v3** integration via googleapis
+- **Redis** (optional) for playlist caching
+- Rate limiting middleware
 - Modular platform architecture in `/backend/platforms/`
 
 ### Frontend
 - **React** with Vite
+- **React Router** for SPA routing
 - **Tailwind CSS** for styling
+- YouTube IFrame Player API integration
 - Responsive design
 - Loading states and error handling
 
@@ -270,7 +280,7 @@ All tracks are returned in a standardized format:
 
 ### API Quota
 
-YouTube Data API v3 has daily quota limits (default: 10,000 units per day). Each search request costs approximately 100 units. Monitor your usage at [Google Cloud Console](https://console.cloud.google.com/apis/api/youtube.googleapis.com/quotas).
+YouTube Data API v3 has daily quota limits. TuneBridge has been approved for 100,000 units per day. Each search request costs approximately 100 units. Monitor your usage at [Google Cloud Console](https://console.cloud.google.com/apis/api/youtube.googleapis.com/quotas).
 
 ### Matching Strategy
 
@@ -291,14 +301,15 @@ The codebase includes a placeholder for OAuth-based playlist creation. This will
 ## Future Enhancements
 
 - [x] YouTube Music search integration
+- [x] Embedded YouTube player
+- [x] Shareable playlist links
+- [x] Alternate video selection
+- [x] Rate limiting and caching
 - [ ] YouTube Music OAuth and playlist creation
-- [ ] Apple Music API integration
 - [ ] Improved track matching with duration comparison
-- [ ] Batch conversion with progress tracking
 - [ ] User authentication
 - [ ] Save conversion history
 - [ ] Download playlist as CSV/JSON
-- [ ] Frontend UI for YouTube conversion
 
 ## Legal & Compliance
 
